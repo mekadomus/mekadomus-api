@@ -16,7 +16,6 @@ cat keyfile.json | docker login -u _json_key_base64 --password-stdin https://$RE
 LAST_TAG=$(git describe --tags $(git rev-list --tags --max-count=1))
 
 # Build docker image
-cd backend
 make image-prod
 
 # Publish docker image

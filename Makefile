@@ -102,18 +102,18 @@ test:
 	@docker compose -f dockerfiles/docker-compose-test.yaml down --remove-orphans
 	@docker compose -f dockerfiles/docker-compose-test.yaml up --build \
 		--abort-on-container-exit \
-		--exit-code-from mekadomus-api
+		--exit-code-from api
 .PHONY: test
 
-format:
-	@docker run --rm -v $(PWD)/:/api/ -w /api/ mekadomus-api-image cargo fmt
-.PHONY: format
+fix:
+	@docker run --rm -e "RUSTFLAGS=-Dwarnings" -v $(PWD)/:/api/ -w /api/ mekadomus-api-image sh -c "cargo fmt && cargo fix"
+.PHONY: fix
 
-check-format:
-	@docker run --rm -v $(PWD)/:/api/ -w /api/ mekadomus-api-image cargo fmt --check
-.PHONY: check-format
+check:
+	@docker run --rm -e "RUSTFLAGS=-Dwarnings" -v $(PWD)/:/api/ -w /api/ mekadomus-api-image sh -c "cargo fmt --check && cargo check"
+.PHONY: check
 
-verify: clean build image-prod check-format test
+verify: clean build image-prod check test
 .PHONY: verify
 
 clean:

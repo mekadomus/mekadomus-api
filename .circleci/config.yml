@@ -7,7 +7,7 @@ jobs:
     steps:
       - add_ssh_keys:
          fingerprints:
-           - "SHA256:D5v5W7Cgjwp7YRMC+tmGu5h73CSzGBG/UbwgLMUs7/w"
+           - "SHA256:IWvA206TP1fzs7LxKB0Gnkf0a/At5p4Q6zNkuPx7EBc"
       - checkout
       - run: echo $SERVICE_ACCOUNT_KEY | base64 --decode > service-account-key.json && make verify
   tag:
@@ -16,7 +16,7 @@ jobs:
     steps:
       - add_ssh_keys:
          fingerprints:
-           - "SHA256:D5v5W7Cgjwp7YRMC+tmGu5h73CSzGBG/UbwgLMUs7/w"
+           - "SHA256:IWvA206TP1fzs7LxKB0Gnkf0a/At5p4Q6zNkuPx7EBc"
       - checkout
       - run: sh scripts/tag.sh
   publish:
@@ -25,7 +25,7 @@ jobs:
     steps:
       - add_ssh_keys:
          fingerprints:
-           - "SHA256:D5v5W7Cgjwp7YRMC+tmGu5h73CSzGBG/UbwgLMUs7/w"
+           - "SHA256:IWvA206TP1fzs7LxKB0Gnkf0a/At5p4Q6zNkuPx7EBc"
       - checkout
       - run: sh scripts/publish.sh
 

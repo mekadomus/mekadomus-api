@@ -100,9 +100,7 @@ pub async fn create_app(
     mail_helper: Arc<dyn MailHelper>,
     user_helper: Arc<dyn UserHelper>,
 ) -> Router {
-    let settings = Arc::new(Settings::from_file(
-        "/api/tests/config/default.yaml",
-    ));
+    let settings = Arc::new(Settings::from_file("/api/tests/config/default.yaml"));
     let storage =
         Arc::new(PostgresStorage::new("postgresql://user:password@postgres/mekadomus").await);
     return mekadomus_api::app(

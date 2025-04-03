@@ -2,12 +2,12 @@ use axum::{
     extract::{Path, Query, State},
     Extension,
 };
-use chrono::{Duration, NaiveDateTime, NaiveTime, Utc};
+use chrono::{Duration, NaiveTime, Utc};
 use uuid::Uuid;
 
 use crate::{
     api::{
-        common::{Series, SeriesGranularity, SeriesItem},
+        common::{Series, SeriesGranularity},
         fluid_meter::FluidMeterStatus::Active,
         measurement::{GetMeasurementsInput, Measurement, SaveMeasurementInput},
         user::User,
