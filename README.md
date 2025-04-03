@@ -1,3 +1,5 @@
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/mekadomus/mekadomus-api/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/mekadomus/mekadomus-api/tree/master)
+
 # Api
 
 The api server for Mekadomus. Written in Rust.
