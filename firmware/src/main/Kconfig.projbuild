@@ -1,7 +1,0 @@
-menu "Backend URL"
-config BACKEND_URL
-        string "Backend URL"
-        default ""
-        help
-            The URL the measurements will be posted to
-endmenu

@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  api-backend:
+    env_file: "../.env"
+    build:
+      dockerfile: dockerfiles/dev
+      context: ../
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - type: bind
+        source: ../assets
+        target: /api/assets
+      - type: bind
+        source: ../src
+        target: /api/src
+      - type: bind
+        source: ../tests
+        target: /api/tests
+      - type: bind
+        source: ../Cargo.toml
+        target: /api/Cargo.toml
+      - type: bind
+        source: ../Cargo.lock
+        target: /api/Cargo.lock
+      - type: bind
+        source: ../build/registry
+        target: /usr/local/cargo/registry
+      - type: bind
+        source: ../build/target
+        target: /api/target
+      - type: bind
+        source: ../build/registry
+        target: /usr/local/cargo/registry
+    ports:
+      - '3000:3000'
+    expose:
+      - '3000'
+    command: >
+      sh -c "RUST_BACKTRACE=1 cargo watch -x run"
+
+  postgres:
+    image: postgres:17.2
+    environment:
+      POSTGRES_DB: 'mekadomus'
+      POSTGRES_USER: 'user'
+      POSTGRES_PASSWORD: 'password'
+    ports:
+      - '5432:5432'
+    expose:
+      - '5432'
+    healthcheck:
+        test: "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"
+        timeout: 10s
+        retries: 5

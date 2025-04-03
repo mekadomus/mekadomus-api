@@ -1,46 +1,65 @@
-# Smart Fluid Flow Meter
+# Api
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/mekadomus/smart-fluid-flow-meter/tree/master.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/mekadomus/smart-fluid-flow-meter/tree/master)
+The api server for Mekadomus. Written in Rust.
 
-Hardware and software for a system that monitors flow of fluids (most likely water) and reports it to a back-end that can emit alerts based on configured preferences.
+## Run
 
-- [backend](/backend/) - Contains the back end server where measurements will be posted
-- [case](/case/) - 3d model of the PCB case
-- [firmware](/firmware/) - The firmware code that takes care of reading the sensor and posting measurements to the back-end
-- [frontend](/frontend/) - The front end that can be used to manage accounts and devices
-- [electronics](/electronics/) - Electronic circuit schematic and pcb
+The easiest way to run locally is to use:
 
-## User documentation
+```
+make start
+```
 
-### LED indicators
+This command uses docker compose to start a PostgreSQL container and another container running the backend. The backend will use `.env.sample` for configuration.
 
-- **Yellow** - Device is booting
-- **Green, yellow and red** - Device set to factory settings and waiting for configuration (See below for instructions to configure)
-- **Green** - Device is configured and behaving correctly
-- **Green and yellow** - Device is in the middle of sending a request to the back-end
-- **Red** - Last request to back-end failed. This could be because configuration is incorrect, or the configured modem is unreachable
-- **None** - This should not happen, it means something is very wrong
+## Tests
 
-### Configuration
+To run tests:
 
-When the device is in factory settings (Green, yellow and red LEDs on), the firmware will start an access point named `my-esp32-ssid`. Connect to the access point using the password `APassword`.
+```
+make test
+```
 
-Once connected, navigate to the url: `sffm.mekadomus.com`. You should get a screen like the following:
+## Production
 
-![Configure device screen](/docs/assets/config-screen.png)
-<config screen>
+This section pertains to the official deployment of this service. It can be safely ignored by most people.
 
-Fill the data as follows:
-- *Wifi Network* - The name of the network the device will connect to
-- *Wifi Password* - The password for the given SSID
-- *Device key* - The unique identifier for this device. This ID will be validated by the backend, so it must be a valid one
+## Connecting to production DB
 
-After submitting the form, you should get the following confirmation screen:
+The official deployment uses a PostgreSQL host for storage. To run the backend locally and connect to the production database we just need to use the production connection string in our .env file and run this command:
 
-![Configuration saved screen](/docs/assets/saved-screen.png)
+```
+make start-prod
+```
 
-The device will proceed to disable the access point and will start reading measurements from the sensor and sending them to the backend every  `MS_BETWEEN_POSTS`.
+## Releasing to production
 
-### Factory reset
+The official deployment uses Cloud Run. In order to release a new version we first need a service account with the correct permissions:
 
-If you need to re-configure the device, press and hold the device button for 5 seconds. After some time the green, yellow and red LEDs should all turn on.
+```
+iam.serviceAccounts.actAs
+run.services.get
+run.services.update
+```
+
+Then you need to install [gcloud cli](https://cloud.google.com/sdk/docs/install) and use this command to activate the service account:
+
+```
+gcloud auth activate-service-account --key-file=<path to service account>
+gcloud auth login <service account>
+```
+
+Finally, use this command to release a new version:
+
+```
+PROJECT=<gcp project id>
+SERVICE_NAME=<gcp service id>
+IMAGE=<gcp artifact registry image, including tag>
+gcloud run deploy $SERVICE_NAME \
+    --project $PROJECT \
+    --platform managed \
+    --allow-unauthenticated \
+    --region us-central1 \
+    --image $IMAGE \
+    --port 3000
+```

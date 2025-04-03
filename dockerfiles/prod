@@ -1,0 +1,10 @@
+FROM ubuntu:24.10
+
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
+
+EXPOSE 3000
+
+COPY build/target/release/mekadomus_api /mekadomus_api
+COPY assets /assets
+
+WORKDIR /

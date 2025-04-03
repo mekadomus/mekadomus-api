@@ -1,7 +1,7 @@
 version: 2.1
 
 jobs:
-  backend:
+  api:
     machine:
       image: ubuntu-2204:2023.04.2
     steps:
@@ -9,17 +9,7 @@ jobs:
          fingerprints:
            - "SHA256:D5v5W7Cgjwp7YRMC+tmGu5h73CSzGBG/UbwgLMUs7/w"
       - checkout
-      - run: cd backend && echo $SERVICE_ACCOUNT_KEY | base64 --decode > service-account-key.json && make verify
-  firmware:
-    machine:
-      image: ubuntu-2204:2023.04.2
-    steps:
-      - add_ssh_keys:
-         fingerprints:
-           - "SHA256:D5v5W7Cgjwp7YRMC+tmGu5h73CSzGBG/UbwgLMUs7/w"
-      - checkout
-      - run: git submodule update --init --recursive
-      - run: cd firmware && make verify
+      - run: echo $SERVICE_ACCOUNT_KEY | base64 --decode > service-account-key.json && make verify
   tag:
     machine:
       image: ubuntu-2204:2023.04.2
@@ -29,7 +19,7 @@ jobs:
            - "SHA256:D5v5W7Cgjwp7YRMC+tmGu5h73CSzGBG/UbwgLMUs7/w"
       - checkout
       - run: sh scripts/tag.sh
-  publish-backend:
+  publish:
     machine:
       image: ubuntu-2204:2023.04.2
     steps:
@@ -37,22 +27,20 @@ jobs:
          fingerprints:
            - "SHA256:D5v5W7Cgjwp7YRMC+tmGu5h73CSzGBG/UbwgLMUs7/w"
       - checkout
-      - run: sh scripts/publish-backend.sh
+      - run: sh scripts/publish.sh
 
 workflows:
   version: 2
   test_and_publish:
     jobs:
-      - backend
-      - firmware
+      - api
       - tag:
           requires:
-            - backend
-            - firmware
+            - api
           filters:
             branches:
               only: master
-      - publish-backend:
+      - publish:
           requires:
             - tag
           filters:
