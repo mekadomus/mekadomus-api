@@ -47,9 +47,7 @@ async fn create_app_user_helper(
     with_session: bool,
     user_helper: Arc<dyn UserHelper>,
 ) -> (Router, Arc<dyn Storage>) {
-    let settings = Arc::new(Settings::from_file(
-        "/api/tests/config/default.yaml",
-    ));
+    let settings = Arc::new(Settings::from_file("/api/tests/config/default.yaml"));
     let storage =
         Arc::new(PostgresStorage::new("postgresql://user:password@postgres/mekadomus").await);
 
