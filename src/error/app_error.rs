@@ -11,8 +11,9 @@ use std::fmt;
 
 #[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub enum AppErrorCode {
-    InvalidInput,
     InternalError,
+    InvalidInput,
+    Unauthorized,
     ValidationError,
 }
 
@@ -22,6 +23,7 @@ impl fmt::Display for AppErrorCode {
             AppErrorCode::InvalidInput => write!(f, "InvalidInput"),
             AppErrorCode::InternalError => write!(f, "InternalError"),
             AppErrorCode::ValidationError => write!(f, "ValidationError"),
+            AppErrorCode::Unauthorized => write!(f, "Unauthorized"),
         }
     }
 }
@@ -37,6 +39,8 @@ pub enum AppError {
     DatabaseError(Error),
     // Data sent by user has mistakes
     ValidationError(Vec<FailedValidation>),
+    // Permission error
+    Unauthorized,
 }
 
 impl From<JsonRejection> for AppError {
@@ -117,6 +121,12 @@ impl IntoResponse for AppError {
                 "Request data is invalid".to_string(),
                 ErrorData::ValidationInfo(data),
             ),
+            AppError::Unauthorized => (
+                StatusCode::UNAUTHORIZED,
+                AppErrorCode::Unauthorized,
+                "You don't have access to this resource".to_string(),
+                ErrorData::Empty,
+            ),
         };
 
         (
@@ -142,4 +152,8 @@ pub fn validation_error<T>(validation_errors: Vec<FailedValidation>) -> Result<T
 // Generic bad request response
 pub fn bad_request<T>() -> Result<T, AppError> {
     return Err(AppError::ValidationError(vec![]));
+}
+
+pub fn unauthorized<T>() -> Result<T, AppError> {
+    return Err(AppError::Unauthorized);
 }

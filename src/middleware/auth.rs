@@ -1,10 +1,14 @@
-use crate::{helper::token::AUTH_TOKEN_LEN, AppState};
+use crate::{
+    error::app_error::{unauthorized, AppError},
+    helper::token::AUTH_TOKEN_LEN,
+    AppState,
+};
 
 use async_trait::async_trait;
 use axum::{
     body::Body,
     extract::State,
-    http::{header::AUTHORIZATION, Request, StatusCode},
+    http::{header::AUTHORIZATION, Request},
     middleware::Next,
     response::Response,
 };
@@ -30,61 +34,53 @@ static PUBLIC_PATHS: Lazy<HashMap<&str, HashSet<Method>>> = Lazy::new(|| {
 #[automock]
 #[async_trait]
 pub trait Authorizer: Send + Sync {
-    async fn authorize(
-        &self,
-        state: AppState,
-        request: &mut Request<Body>,
-    ) -> Result<(), StatusCode>;
+    async fn authorize(&self, state: AppState, request: &mut Request<Body>) -> bool;
 }
 
 pub struct DefaultAuthorizer;
 
 #[async_trait]
 impl Authorizer for DefaultAuthorizer {
-    async fn authorize(
-        &self,
-        state: AppState,
-        request: &mut Request<Body>,
-    ) -> Result<(), StatusCode> {
+    async fn authorize(&self, state: AppState, request: &mut Request<Body>) -> bool {
         let method = request.method();
         let path = request.uri().path();
         if PUBLIC_PATHS.contains_key(path) && PUBLIC_PATHS.get(path).unwrap().contains(method) {
-            return Ok(());
+            return true;
         }
 
         let auth_header = match request.headers().get(AUTHORIZATION) {
             Some(h) => h.to_str().unwrap(),
-            None => return Err(StatusCode::UNAUTHORIZED),
+            None => return false,
         };
         let parts: Vec<&str> = auth_header.split_whitespace().collect();
         if parts.len() != 2 {
-            return Err(StatusCode::UNAUTHORIZED);
+            return false;
         }
 
         match parts[0] {
             "Bearer" => {
                 let token = parts[1];
                 if token.len() < *AUTH_TOKEN_LEN {
-                    return Err(StatusCode::UNAUTHORIZED);
+                    return false;
                 }
                 match state.storage.user_by_token(token).await {
                     Ok(u) => {
                         if u.is_none() {
-                            return Err(StatusCode::UNAUTHORIZED);
+                            return false;
                         }
                         let mut user = u.unwrap();
                         user.password = None;
                         request.extensions_mut().insert(user);
-                        return Ok(());
+                        return true;
                     }
                     Err(e) => {
                         error!("Failed to authorize user: {}", e);
-                        return Err(StatusCode::INTERNAL_SERVER_ERROR);
+                        return false;
                     }
                 }
             }
             _ => {
-                return Err(StatusCode::UNAUTHORIZED);
+                return false;
             }
         }
     }
@@ -94,14 +90,15 @@ pub async fn auth(
     State(state): State<AppState>,
     mut request: Request<Body>,
     next: Next,
-) -> Result<Response, StatusCode> {
-    match state
+) -> Result<Response, AppError> {
+    if state
         .authorizer
         .clone()
         .authorize(state, &mut request)
         .await
     {
-        Ok(_) => return Ok(next.run(request).await),
-        Err(e) => return Err(e),
-    };
+        return Ok(next.run(request).await);
+    } else {
+        return unauthorized();
+    }
 }
