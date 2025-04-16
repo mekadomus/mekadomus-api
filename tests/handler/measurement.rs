@@ -105,7 +105,7 @@ async fn create_app_user_helper(
             if with_session {
                 request.extensions_mut().insert(user.clone());
             }
-            Ok(())
+            true
         });
 
     let mail_helper = Arc::new(MockMailHelper::new());

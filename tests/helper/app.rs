@@ -88,7 +88,7 @@ pub async fn create_app_with_user_user_helper(
             };
             request.extensions_mut().insert(user);
 
-            return Ok(());
+            return true;
         });
     let mail_helper = Arc::new(MockMailHelper::new());
 

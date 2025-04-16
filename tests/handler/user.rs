@@ -632,6 +632,9 @@ async fn me_no_auth_token() {
         .unwrap();
 
     assert_eq!(response.status(), StatusCode::UNAUTHORIZED);
+    let body = response.into_body().collect().await.unwrap().to_bytes();
+    let resp: ErrorResponse = serde_json::from_slice(&body).unwrap();
+    assert_eq!(resp.code, AppErrorCode::Unauthorized);
 }
 
 #[test(tokio::test)]
